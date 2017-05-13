@@ -15,3 +15,6 @@ func main() {
 }
 ```
 
+Then all your request to `localhost:9090/foo/**` will balance between `localhost:9091/**`, `localhost:9092/**`, `localhost:9093/**`.
+
+If you do not want to use prefix, use `NewBalancerWithoutPrefix`.
