@@ -8,8 +8,8 @@ If you have something to add, please fork and make a pull-request.
 
 ```go
 func main() {
-  balancer := NewBalancerNode("/foo", []string{"http://localhost:9091", "http://localhost:9092", "http://localhost:9093"})
-  proxy := balancer.NewMultipleHostReverseProxy()
+  b := balancer.NewBalancerNode("/foo", []string{"http://localhost:9091", "http://localhost:9092", "http://localhost:9093"})
+  proxy := b.NewMultipleHostReverseProxy()
 
   log.Fatal(http.ListenAndServe(":9090", proxy))
 }
