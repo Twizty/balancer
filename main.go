@@ -1,22 +1,28 @@
 package balancer
  
 import (
-  "log"
   "net/http"
   "net/http/httputil"
   "net/url"
   "strings"
+  "sync/atomic"
+)
+
+const (
+  MAX_COUNTER_VALUE  = int32(1000)
+  ZERO_COUNTER_VALUE = int32(0)
+  COUNTER_STEP       = int32(1)
 )
 
 type BalancerNode struct {
-  counter *int
+  counter *int32
   prefix  string
   nodes   []*url.URL
 }
 
 func (self *BalancerNode) dropCounter() {
-  if *self.counter > 1000 {
-    *self.counter = 0
+  if *self.counter > MAX_COUNTER_VALUE {
+    atomic.StoreInt32(self.counter, ZERO_COUNTER_VALUE)
   }
 }
 
@@ -24,8 +30,8 @@ func (self *BalancerNode) NewMultipleHostReverseProxy() *httputil.ReverseProxy {
   director := func(req *http.Request) {
     defer self.dropCounter()
 
-    *self.counter++
-    target := self.nodes[*self.counter % len(self.nodes)]
+    atomic.AddInt32(self.counter, COUNTER_STEP)
+    target := self.nodes[int(*self.counter) % len(self.nodes)]
     req.URL.Scheme = target.Scheme
     req.URL.Host = target.Host
     req.URL.Path = strings.TrimPrefix(req.URL.Path, self.prefix)
@@ -35,7 +41,7 @@ func (self *BalancerNode) NewMultipleHostReverseProxy() *httputil.ReverseProxy {
 }
 
 func NewBalancerNode(prefix string, hosts []string) *BalancerNode {
-  var i *int = new(int)
+  var i *int32 = new(int32)
   nodes := make([]*url.URL, len(hosts))
   *i = 0
 
