@@ -9,9 +9,8 @@ import (
 )
 
 const (
-  MAX_COUNTER_VALUE  = int32(1000)
-  ZERO_COUNTER_VALUE = int32(0)
-  COUNTER_STEP       = int32(1)
+  MAX_COUNTER_VALUE = int32(1000)
+  COUNTER_STEP      = int32(1)
 )
 
 type BalancerNode struct {
@@ -20,16 +19,8 @@ type BalancerNode struct {
   nodes   []*url.URL
 }
 
-func (self *BalancerNode) dropCounter() {
-  if *self.counter > MAX_COUNTER_VALUE {
-    atomic.StoreInt32(self.counter, ZERO_COUNTER_VALUE)
-  }
-}
-
 func (self *BalancerNode) NewMultipleHostReverseProxy() *httputil.ReverseProxy {
   director := func(req *http.Request) {
-    defer self.dropCounter()
-
     atomic.AddInt32(self.counter, COUNTER_STEP)
     target := self.nodes[int(*self.counter) % len(self.nodes)]
     req.URL.Scheme = target.Scheme
